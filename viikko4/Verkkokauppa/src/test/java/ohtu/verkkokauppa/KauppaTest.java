@@ -72,13 +72,38 @@ public class KauppaTest {
 
     @Test
     public void ostetaanOlevaaJaLoppunutta() {
-      when(varasto.saldo(2)).thenReturn(0);
-      when(varasto.haeTuote(2)).thenReturn(new Tuote(2, "kaakao", 3));
+        when(varasto.saldo(2)).thenReturn(0);
+        when(varasto.haeTuote(2)).thenReturn(new Tuote(2, "kaakao", 3));
 
-      k.aloitaAsiointi();
-      k.lisaaKoriin(1);
-      k.lisaaKoriin(2);
-      k.tilimaksu("testi", "123321");
-      verify(pankki).tilisiirto("testi", 42, "123321", "33333-44455", 5);
+        k.aloitaAsiointi();
+        k.lisaaKoriin(1);
+        k.lisaaKoriin(2);
+        k.tilimaksu("testi", "123321");
+        verify(pankki).tilisiirto("testi", 42, "123321", "33333-44455", 5);
+    }
+
+    @Test
+    public void aloitaAsiointiNollaaKaiken() {
+        when(varasto.saldo(2)).thenReturn(1);
+        when(varasto.haeTuote(2)).thenReturn(new Tuote(2, "kaakao", 1));
+        k.aloitaAsiointi();
+        k.lisaaKoriin(1);
+        k.lisaaKoriin(1);
+        k.lisaaKoriin(1);
+        k.aloitaAsiointi();
+        k.lisaaKoriin(2);
+        k.tilimaksu("testi", "123321");
+        verify(pankki).tilisiirto("testi", 42, "123321", "33333-44455", 1);
+    }
+
+    @Test
+    public void tilimaksuLuoAinaUudenViitteen() {
+        k.aloitaAsiointi();
+        k.lisaaKoriin(1);
+        k.tilimaksu("testi", "123321");
+        k.aloitaAsiointi();
+        k.lisaaKoriin(1);
+        k.tilimaksu("testi", "123321");
+        verify(viite, times(2)).uusi();
     }
 }
